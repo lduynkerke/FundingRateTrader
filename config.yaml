@@ -1,0 +1,56 @@
+mexc:
+  api_key: ""
+  secret_key: "your_secret_key_here"
+  base_urls:
+    spot: "https://api.mexc.com"
+    contract: "https://contract.mexc.com"
+  timeout: 10
+
+logging:
+  log_dir: "logs"
+  log_level: "DEBUG"
+  console_log_level: "WARNING"
+  file_log_level: "INFO"
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_log_files: 30
+
+# Original funding settings (kept for reference)
+funding:
+  snapshot_window_minutes: 10
+  log_interval_hours: 4
+  top_n_symbols: 5
+  time_windows:
+    daily_days_back: 3
+    hourly_hours_back: 8
+    ten_min_hours_before: 2
+    one_min_minutes_before: 15
+    one_min_minutes_after: 15
+
+# New trading settings
+trading:
+  # Number of top symbols to trade
+  top_n: 3
+  
+  # Position sizing
+  position_size_usd: 100  # Fixed USD amount per position
+  max_positions: 3        # Maximum number of concurrent positions
+  
+  # ATR settings
+  atr_period: 14          # Period for ATR calculation
+  atr_timeframe: "Min15"  # Timeframe for ATR calculation
+  
+  # Take profit and stop loss settings
+  tp_atr_multiplier: 1.5  # TP = entry_price - (atr * tp_multiplier)
+  sl_atr_multiplier: 2.0  # SL = entry_price + (atr * sl_multiplier)
+  
+  # Funding rate thresholds
+  min_funding_rate: 0.0001  # Minimum funding rate to consider trading (0.01%)
+  
+  # Time windows
+  pre_funding_seconds: 30    # Enter position X seconds before funding
+  post_funding_minutes: 3    # Close position X minutes after funding if TP/SL not hit
+  
+  # Trade management
+  enable_trailing_stop: false  # Whether to use trailing stop
+  trailing_stop_activation: 0.5  # Activate trailing stop after X% profit
+  trailing_stop_distance: 0.3    # Trailing stop X% behind price
