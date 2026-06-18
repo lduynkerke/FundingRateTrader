@@ -1,6 +1,8 @@
 mexc:
+  # SECRETS: leave blank here. Provide via env (MEXC_API_KEY / MEXC_SECRET_KEY)
+  # or the gitignored config.local.yaml. The previously-committed key MUST be rotated.
   api_key: ""
-  secret_key: "your_secret_key_here"
+  secret_key: ""
   base_urls:
     spot: "https://api.mexc.com"
     contract: "https://contract.mexc.com"
@@ -9,12 +11,30 @@ mexc:
 logging:
   log_dir: "logs"
   log_level: "DEBUG"
-  console_log_level: "WARNING"
+  console_log_level: "INFO"
   file_log_level: "INFO"
   log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   max_log_files: 30
 
-# Original funding settings (kept for reference)
+# S1-Episode strategy (VERDICT.md "conditional GO" defaults)
+strategy:
+  entry_threshold: 0.01      # predicted funding >= 1% (lower bound only, no upper cap)
+  min_age_days: 90.0         # contract listing age floor
+  min_liq_quote_vol: 500.0   # quiet pre-event quote-vol per 5m bar ($)
+  normalize_threshold: 0.001 # |pred rate| < 0.1% => episode over
+  time_cap_hours: 24.0       # hard cap on hold time
+  stop_pct: 0.175            # adverse-excursion hard stop (validated 0.15-0.20)
+  equity_fraction: 0.05      # notional per trade as fraction of equity
+  max_concurrent: 5          # max simultaneous positions
+  leverage: 1                # isolated-margin leverage
+
+runtime:
+  mode: "paper"              # "paper" (simulated) or "live". KEEP paper until go-live gates pass.
+  state_path: "state/engine_state.json"
+  entry_delay_minutes: 15    # enter at funding + this many minutes (validated +5..+30)
+  paper_start_equity: 10000.0
+
+# --- Legacy (superseded; kept for reference, not used by the new runtime) ---
 funding:
   snapshot_window_minutes: 10
   log_interval_hours: 4
@@ -25,32 +45,3 @@ funding:
     ten_min_hours_before: 2
     one_min_minutes_before: 15
     one_min_minutes_after: 15
-
-# New trading settings
-trading:
-  # Number of top symbols to trade
-  top_n: 3
-  
-  # Position sizing
-  position_size_usd: 100  # Fixed USD amount per position
-  max_positions: 3        # Maximum number of concurrent positions
-  
-  # ATR settings
-  atr_period: 14          # Period for ATR calculation
-  atr_timeframe: "Min15"  # Timeframe for ATR calculation
-  
-  # Take profit and stop loss settings
-  tp_atr_multiplier: 1.5  # TP = entry_price - (atr * tp_multiplier)
-  sl_atr_multiplier: 2.0  # SL = entry_price + (atr * sl_multiplier)
-  
-  # Funding rate thresholds
-  min_funding_rate: 0.0001  # Minimum funding rate to consider trading (0.01%)
-  
-  # Time windows
-  pre_funding_seconds: 30    # Enter position X seconds before funding
-  post_funding_minutes: 3    # Close position X minutes after funding if TP/SL not hit
-  
-  # Trade management
-  enable_trailing_stop: false  # Whether to use trailing stop
-  trailing_stop_activation: 0.5  # Activate trailing stop after X% profit
-  trailing_stop_distance: 0.3    # Trailing stop X% behind price

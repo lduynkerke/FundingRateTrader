@@ -61,3 +61,12 @@ venv.bak/
 
 # Project specific
 logs/*.log
+
+# Secrets and live state (never commit)
+config.local.yaml
+state/
+cache/
+
+# Generated experiment outputs (FINDINGS.md is curated and committed)
+experiments/EXECUTION_REPORT.md
+experiments/ORDER_ROUNDTRIP_LOG.md
