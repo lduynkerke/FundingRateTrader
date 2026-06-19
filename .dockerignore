@@ -1,0 +1,25 @@
+# Secrets — NEVER bake into the image (inject via env at runtime).
+config.local.yaml
+.env
+
+# Ephemeral runtime data — provided by mounted volumes, not the image.
+state/
+logs/
+cache/
+
+# Generated experiment outputs.
+experiments/EXECUTION_REPORT.md
+experiments/ORDER_ROUNDTRIP_LOG.md
+experiments/DOMAIN_PROBE_LOG.md
+experiments/DRESS_REHEARSAL_REPORT.md
+
+# Dev cruft.
+.git
+.idea
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov

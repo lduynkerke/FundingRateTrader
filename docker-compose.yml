@@ -1,0 +1,30 @@
+# S1-Episode funding trader — deployment.
+#
+#   docker compose build
+#   docker compose run --rm trader preflight        # read-only go/no-go (run FIRST, on the VM)
+#   docker compose run --rm trader roundtrip FLOW_USDT   # one gated real order (needs the env flag)
+#   docker compose up -d                            # start the trader (paper or live per config)
+#   docker compose logs -f                          # watch it
+#
+# State and logs live in named volumes so they survive container recreation — the trader
+# resumes open positions / episode memory after a restart.
+
+services:
+  trader:
+    build: .
+    image: frt-trader:latest
+    env_file: .env            # MEXC_API_KEY, MEXC_SECRET_KEY, FRT_CONFIRM_LIVE, MEXC_ALLOW_LIVE_ORDERS
+    volumes:
+      - frt-state:/app/state
+      - frt-logs:/app/logs
+    restart: unless-stopped
+    stop_grace_period: 30s    # let an in-flight cycle finish; state writes are atomic anyway
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  frt-state:
+  frt-logs:
