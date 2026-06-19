@@ -25,8 +25,8 @@ strategy:
   normalize_threshold: 0.001 # |pred rate| < 0.1% => episode over
   time_cap_hours: 24.0       # hard cap on hold time
   stop_pct: 0.175            # adverse-excursion hard stop (validated 0.15-0.20)
-  equity_fraction: 0.05      # notional per trade as fraction of equity
-  max_concurrent: 5          # max simultaneous positions
+  equity_fraction: 0.10      # notional per trade as fraction of equity (test phase: 10%)
+  max_concurrent: 1          # max simultaneous positions (test phase: one at a time)
   leverage: 1                # isolated-margin leverage
 
 runtime:
