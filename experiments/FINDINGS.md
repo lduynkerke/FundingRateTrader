@@ -17,6 +17,10 @@
   **account/region/gateway level on the trading path** (Akamai WAF "Reference #18..." on
   /order/submit only). Most consistent with a geo/region trading restriction hitting the egress IP
   (this shell is behind a TLS-intercepting proxy) and/or the account not being futures-API approved.
+- **Retested from the user's DIRECT network (no proxy): still 403**, and the Akamai edge token
+  (`#18.8c8e1002...`) matched the sandbox runs (same geo-routing). This rules out the proxy and
+  points to a **region/account-level MEXC policy** refusing futures-API `order/submit` here while
+  permitting all reads. Not fixable in code — path forward is MEXC-side or manual-assisted exec.
 
 ## What this means
 The S1-Episode logic, paper engine, signer, and read adapters are all correct and live-verified,
