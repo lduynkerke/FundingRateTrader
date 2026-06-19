@@ -5,7 +5,8 @@ mexc:
   secret_key: ""
   base_urls:
     spot: "https://api.mexc.com"
-    contract: "https://contract.mexc.com"
+    # contract trading: the .com edge WAF 403-blocks order/submit; the .co mirror does not.
+    contract: "https://contract.mexc.co"
   timeout: 10
 
 logging:

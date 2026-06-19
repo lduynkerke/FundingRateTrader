@@ -38,6 +38,13 @@ def make(transport):
                         clock=lambda: TS, default_leverage=1)
 
 
+def test_default_base_url_is_gateway_unblocked_co_mirror():
+    # The .com host is WAF-blocked on order/submit (HTML 403); the .co mirror is not
+    # (verified live 2026-06-19, experiments/domain_probe.py). Default to the working host.
+    ex = MexcExchange(KEY, SECRET)
+    assert ex._base == "https://contract.mexc.co"
+
+
 def test_raises_on_nonzero_code():
     t = FakeTransport()
     t.routes["/account/assets"] = {"success": False, "code": 602, "message": "sign error"}

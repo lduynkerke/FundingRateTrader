@@ -11,6 +11,11 @@ the short (side 2) at market when price rises to the trigger (triggerType 1 = pr
 
 HTTP transport + clock are injected for testing; the default transport uses requests with a
 truststore-patched TLS context (TLS-intercepting proxy in this environment).
+
+Base host: the `contract.mexc.com` edge WAF-blocks POST /order/submit with an HTML 403
+("Access Denied") even though every read succeeds. The `contract.mexc.co` mirror is NOT behind
+that WAF and accepts order/submit (verified live 2026-06-19 via experiments/domain_probe.py),
+so the default base_url points at the `.co` host. MEXC support confirmed `.co` as the backup.
 """
 
 from __future__ import annotations
@@ -55,7 +60,7 @@ class MexcExchange:
         self,
         api_key: str,
         secret_key: str,
-        base_url: str = "https://contract.mexc.com",
+        base_url: str = "https://contract.mexc.co",
         transport: Callable = None,
         clock: Callable[[], str] = None,
         default_leverage: int = 1,
