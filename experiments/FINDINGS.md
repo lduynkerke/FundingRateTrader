@@ -12,6 +12,11 @@
 - Diagnosis: this is MEXC's well-known policy — **contract/futures API order placement is gated**
   (approved market-makers/brokers only); ordinary keys are effectively read-only for futures.
   Reads pass the same proxy/IP, so it is path/permission-specific, not a blanket IP block.
+- **Retested 2026-06-19 with a second, freshly-created key on the same account/network: identical
+  403.** This rules out key-level causes (permissions/whitelist) and signing — the block is at the
+  **account/region/gateway level on the trading path** (Akamai WAF "Reference #18..." on
+  /order/submit only). Most consistent with a geo/region trading restriction hitting the egress IP
+  (this shell is behind a TLS-intercepting proxy) and/or the account not being futures-API approved.
 
 ## What this means
 The S1-Episode logic, paper engine, signer, and read adapters are all correct and live-verified,
