@@ -22,6 +22,34 @@ signing, account, or region policy. Fix: `MexcExchange` now defaults to `https:/
 - Order/position shapes match the adapter mapping (positionId, dealAvgPrice, holdVol, state=3).
 **Live trading path is fully operational. L4 unblocked.**
 
+### Pre-go-live dress rehearsal (2026-06-19, experiments/execution_dress_rehearsal.py)
+Exercised EVERY call the live runtime makes, in order. All pass:
+- **Reads:** list_contracts (~600 ms), usdt_perp_symbols (779), get_equity / list_open_symbols /
+  get_positions (auth, ~300 ms each), build_snapshot (~600 ms).
+- **Funding scan optimized:** run_cycle previously called `funding()` once per symbol →
+  **~218 s/cycle serial** (779 calls). `contract/ticker` already carries `fundingRate` (== the
+  per-symbol predicted rate) and `fairPrice`, so the new `MexcData.funding_all()` does the whole
+  universe in **~150 ms (one call)**. run_cycle now uses it. Big latency + rate-limit risk removed.
+- **Writes (first live test of place_stop + cancel_all):** open_short → place_stop (protective
+  stop at entry×1.175, far above so it cannot fire) → **stop confirmed resting** (planorder list,
+  states=1) → cancel_all → **0 active plan orders remain** → close → **flat**. Full executor path
+  works live.
+- **Plan-order states (verified):** `1`=untriggered/resting, `2`=cancelled, `3`=triggered. The
+  list endpoint returns terminal states too, so count "resting" with `states=1` (a naive unfiltered
+  count falsely flags cancelled orders as live — caught and fixed during the rehearsal).
+- **Slippage (FLOW_USDT, 1 contract):** open vs fair ~**±3.5 bps** (≈1 tick on a 1-tick spread),
+  close ~**+3.4–10 bps**. Taker fee **~8 bps/side**. So realistic **round-trip cost ~0.2%**,
+  under the 0.30% VERDICT assumption. Latencies: open ~0.8 s, close ~1.0 s, both well within a
+  funding-window cadence.
+- **close() now reports the real fill price** (re-fetches the close order) so exit slippage/P&L is
+  measurable; previously it returned avg_price=0.
+
+### Go-live wiring
+`main.build_exchange("live", ...)` now constructs `MexcExchange` on the `.co` host, but only when
+`FRT_CONFIRM_LIVE=1` is set AND `mexc_live` credentials resolve — otherwise it refuses. Set
+`runtime.mode: live` in config + `FRT_CONFIRM_LIVE=1` to go live. Account equity is **25 USDT**
+(fund before meaningful trading).
+
 Everything below is the original 2026-06-18 diagnosis, kept for the record.
 
 ---
