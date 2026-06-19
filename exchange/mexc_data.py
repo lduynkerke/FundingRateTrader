@@ -56,6 +56,18 @@ class MexcData:
             "fair_price": float(d["fairPrice"]),
         }
 
+    def funding_all(self) -> Dict[str, dict]:
+        """Predicted funding rate + fair price for the WHOLE universe in one ticker call.
+
+        contract/ticker carries fundingRate (== the per-symbol predicted rate, verified live)
+        and fairPrice for every symbol, so the per-cycle universe scan needs a single request
+        instead of one funding_rate call per symbol (~779 -> 1).
+        """
+        return {
+            t["symbol"]: {"pred_rate": float(t["fundingRate"]), "fair_price": float(t["fairPrice"])}
+            for t in self._get(f"{self._base}/api/v1/contract/ticker")["data"]
+        }
+
     def _klines(self, symbol: str, interval: str, start: int, end: int) -> dict:
         return self._get(
             f"{self._base}/api/v1/contract/kline/{symbol}",

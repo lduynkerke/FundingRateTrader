@@ -38,7 +38,11 @@ def run_cycle(
     contracts = {c["symbol"]: c for c in data.list_contracts()}
     symbols = [s for s in data.usdt_perp_symbols()]
 
-    funding_map = {sym: data.funding(sym) for sym in symbols}
+    # one bulk ticker call gives predicted funding + fair price for the whole universe,
+    # instead of one funding_rate request per symbol (avoids a ~200s/cycle serial scan).
+    funding_all = data.funding_all()
+    funding_map = {sym: funding_all[sym] for sym in symbols if sym in funding_all}
+    symbols = [s for s in symbols if s in funding_map]
     held = exchange.list_open_symbols()
 
     # feed the paper simulator the latest fair prices (and credit funding to held shorts)

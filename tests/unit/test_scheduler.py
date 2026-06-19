@@ -35,6 +35,10 @@ KLINE = {"data": {"time": [1, 2], "close": [1.0, 1.0], "amount": [1000.0, 1000.0
 def fake_http(url, params=None):
     if "/contract/detail" in url:
         return DETAIL
+    if "/contract/ticker" in url:
+        # bulk funding+fair for the whole universe (mirrors FUNDING so the cycle sees the same)
+        return {"data": [{"symbol": s, "fundingRate": f["fundingRate"],
+                          "fairPrice": f["fairPrice"]} for s, f in FUNDING.items()]}
     if "/funding_rate/" in url:
         sym = url.rsplit("/", 1)[-1]
         return {"data": {"symbol": sym, **FUNDING[sym]}}

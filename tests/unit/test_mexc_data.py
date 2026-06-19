@@ -37,9 +37,17 @@ KLINE = {"success": True, "code": 0, "data": {
 }}
 
 
+TICKER = {"success": True, "code": 0, "data": [
+    {"symbol": "BTC_USDT", "fundingRate": 1.5e-05, "fairPrice": 65000.0, "bid1": 64999.0, "ask1": 65001.0},
+    {"symbol": "PUMP_USDT", "fundingRate": 0.02, "fairPrice": 1.05, "bid1": 1.04, "ask1": 1.06},
+]}
+
+
 def fake_http(url, params=None):
     if "/contract/detail" in url:
         return DETAIL
+    if "/contract/ticker" in url:
+        return TICKER
     if "/funding_rate/" in url:
         return FUNDING
     if "/kline/" in url:
@@ -74,6 +82,15 @@ def test_funding_maps_predicted_rate_and_fair_price(data):
     assert f["collect_cycle"] == 8
     assert f["fair_price"] == 1.05
     assert f["next_settle_time"] == 1781740800000
+
+
+def test_funding_all_reads_whole_universe_from_one_ticker_call(data):
+    # the per-cycle universe scan collapses 779 funding calls into a single ticker call;
+    # ticker.fundingRate == per-symbol predicted rate (verified live 2026-06-19).
+    fa = data.funding_all()
+    assert fa["PUMP_USDT"] == {"pred_rate": 0.02, "fair_price": 1.05}
+    assert fa["BTC_USDT"]["pred_rate"] == pytest.approx(1.5e-05)
+    assert fa["BTC_USDT"]["fair_price"] == 65000.0
 
 
 def test_liquidity_is_median_quote_vol(data):
