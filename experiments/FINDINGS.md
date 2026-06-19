@@ -9,7 +9,19 @@ contract-API host with a private read + a NON-destructive invalid-symbol `order/
 - `https://api.mexc.co`       — same as the `.co` mirror (past gateway).
 So the 403 was an **edge-WAF quirk of the `.com` host on the trading path only**, not a key,
 signing, account, or region policy. Fix: `MexcExchange` now defaults to `https://contract.mexc.co`.
-A real 1-contract round-trip (`experiments/order_roundtrip.py`) is the remaining confirmation.
+
+### CONFIRMED live (2026-06-19): full round-trip on `.co` succeeded
+`order_roundtrip.py FLOW_USDT 60` (open 1-contract isolated short, hold 60s, flatten) on the
+`.co` host — clean end-to-end:
+- OPEN: submit ack **420 ms**, market fill **~304 ms** later. `dealAvgPrice=0.02876` vs fair
+  `0.02876` → **0.0 bps slippage** (filled right at the bid, spread was 1 tick / ~3.5 bps).
+- FEE: `takerFee=2.3e-6 USDT` on `0.002876 USDT` notional ⇒ **~8 bps taker per side**, so
+  **~16 bps round-trip taker** (corrects the earlier "~0.08% RT" estimate; still comfortably
+  under the VERDICT's 0.30% cost assumption, so the edge survives net of fees).
+- CLOSE: ack **733 ms**, position **flat in ~308 ms**, account confirmed flat. No residual.
+- Order/position shapes match the adapter mapping (positionId, dealAvgPrice, holdVol, state=3).
+**Live trading path is fully operational. L4 unblocked.**
+
 Everything below is the original 2026-06-18 diagnosis, kept for the record.
 
 ---

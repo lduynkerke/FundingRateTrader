@@ -55,7 +55,7 @@ def poll_until(fn, ok, timeout_s=10.0, interval_s=0.3):
     return fn(), (time.perf_counter() - start) * 1000
 
 
-def run(symbol=None):
+def run(symbol=None, hold_seconds: float = 0.0):
     c = _creds()
     ex = MexcExchange(c["api_key"], c["secret_key"], default_leverage=1)
     data = MexcData()
@@ -100,6 +100,11 @@ def run(symbol=None):
             log.append(f"- OPEN slippage vs fair: {slippage_bps(deal, fair, 'sell'):.1f} bps "
                        f"(fill {deal} vs fair {fair})")
 
+        # --- HOLD (let the position sit, e.g. 60s after fill) ---
+        if hold_seconds > 0:
+            log.append(f"- HOLD {hold_seconds:.0f}s after fill before flattening...")
+            time.sleep(hold_seconds)
+
         # --- CLOSE (flatten) ---
         t1 = time.perf_counter()
         close_resp = ex.close(symbol)
@@ -122,4 +127,6 @@ def run(symbol=None):
 
 
 if __name__ == "__main__":
-    run(sys.argv[1] if len(sys.argv) > 1 else None)
+    sym = sys.argv[1] if len(sys.argv) > 1 else None
+    hold = float(sys.argv[2]) if len(sys.argv) > 2 else 0.0
+    run(sym, hold_seconds=hold)
