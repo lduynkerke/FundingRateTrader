@@ -45,3 +45,28 @@ def load_config(path: str = "config.yaml", local_path: str = None) -> dict:
         mexc["secret_key"] = os.getenv("MEXC_SECRET_KEY")
 
     return config
+
+
+def load_live_creds(local_path: str = None) -> dict:
+    """Resolve live MEXC credentials for tools/experiments.
+
+    Precedence: MEXC_API_KEY/MEXC_SECRET_KEY env vars (how the Docker container injects
+    secrets) first, then the `mexc_live` (or `mexc`) block of config.local.yaml. Raises if
+    neither yields a key pair, so a misconfigured deploy fails loudly instead of unsigned.
+    """
+    api, sec = os.getenv("MEXC_API_KEY"), os.getenv("MEXC_SECRET_KEY")
+    if api and sec:
+        return {"api_key": api, "secret_key": sec}
+
+    if local_path is None:
+        local_path = str(Path(__file__).resolve().parents[1] / "config.local.yaml")
+    if Path(local_path).exists():
+        data = yaml.safe_load(open(local_path)) or {}
+        block = data.get("mexc_live") or data.get("mexc") or {}
+        if block.get("api_key") and block.get("secret_key"):
+            return {"api_key": block["api_key"], "secret_key": block["secret_key"]}
+
+    raise RuntimeError(
+        "No MEXC live credentials found: set MEXC_API_KEY/MEXC_SECRET_KEY env vars or add a "
+        "mexc_live block to config.local.yaml."
+    )

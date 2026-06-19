@@ -19,13 +19,13 @@ import yaml
 from exchange.mexc import MexcError, MexcExchange
 from exchange.mexc_data import MexcData
 from experiments.selection import rank_affordable
+from utils.config_loader import load_live_creds
 
 REPORT = Path(__file__).with_name("EXECUTION_REPORT.md")
 
 
 def _creds():
-    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config.local.yaml"))
-    return cfg["mexc_live"]
+    return load_live_creds()
 
 
 def run() -> str:

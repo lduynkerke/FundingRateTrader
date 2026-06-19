@@ -40,14 +40,14 @@ from experiments.metrics import slippage_bps, summarize_latencies
 from experiments.selection import rank_affordable
 from strategy.config import StrategyConfig
 from strategy.exits import short_stop_price
+from utils.config_loader import load_live_creds
 
 REPORT = Path(__file__).with_name("DRESS_REHEARSAL_REPORT.md")
 FUNDING_BURST = 40  # symbols to sample for the per-cycle funding-scan timing
 
 
 def _creds():
-    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config.local.yaml"))
-    return cfg["mexc_live"]
+    return load_live_creds()
 
 
 def _timed(fn):

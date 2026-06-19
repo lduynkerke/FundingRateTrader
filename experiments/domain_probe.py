@@ -25,6 +25,7 @@ from pathlib import Path
 import yaml
 
 from exchange.mexc import MexcError, MexcExchange
+from utils.config_loader import load_live_creds
 
 # Candidate contract-API hosts to try, in MEXC-support's suggested order.
 CANDIDATES = [
@@ -38,8 +39,7 @@ LOG = Path(__file__).with_name("DOMAIN_PROBE_LOG.md")
 
 
 def _creds() -> dict:
-    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config.local.yaml"))
-    return cfg["mexc_live"]
+    return load_live_creds()
 
 
 def _classify_order_path(ex: MexcExchange) -> str:
