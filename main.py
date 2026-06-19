@@ -10,6 +10,9 @@ then runs the settlement-cadence loop. Backend is chosen by config `runtime.mode
 Run:  python main.py
 """
 
+import os
+
+from exchange.mexc import MexcExchange
 from exchange.mexc_data import MexcData
 from exchange.paper import PaperExchange
 from runtime.executor import Executor
@@ -25,10 +28,21 @@ def build_exchange(mode: str, runtime_cfg: dict, mexc_cfg: dict):
     if mode == "paper":
         return PaperExchange(equity=float(runtime_cfg.get("paper_start_equity", 10_000.0)))
     if mode == "live":
-        raise NotImplementedError(
-            "Live trading backend (MexcExchange) is not enabled. Complete the go-live gates "
-            "in PLAN.md §3 first: (1) read-only private API canary with corrected contract "
-            "signing, (2) tiny real test order + cancel, (3) >=2 settlements in paper mode."
+        if os.getenv("FRT_CONFIRM_LIVE") != "1":
+            raise RuntimeError(
+                "Refusing to start LIVE trading without explicit confirmation. "
+                "Set FRT_CONFIRM_LIVE=1 in the environment to place real orders."
+            )
+        api_key = (mexc_cfg or {}).get("api_key", "")
+        secret_key = (mexc_cfg or {}).get("secret_key", "")
+        if not api_key or not secret_key:
+            raise RuntimeError(
+                "Live mode needs MEXC credentials (mexc_live in config.local.yaml or "
+                "MEXC_API_KEY/MEXC_SECRET_KEY env). None resolved."
+            )
+        return MexcExchange(
+            api_key, secret_key,
+            default_leverage=int(runtime_cfg.get("leverage", 1)),
         )
     raise ValueError(f"Unknown runtime.mode: {mode!r} (expected 'paper' or 'live')")
 
@@ -45,7 +59,10 @@ def main() -> None:
                 mode, cfg.stop_pct * 100, cfg.entry_threshold * 100, cfg.max_concurrent)
 
     data = MexcData()
-    exchange = build_exchange(mode, runtime_cfg, config.get("mexc", {}))
+    # live trading uses the dedicated mexc_live credentials (config.local.yaml), falling back
+    # to the generic mexc block / env secrets.
+    live_creds = config.get("mexc_live") or config.get("mexc", {})
+    exchange = build_exchange(mode, runtime_cfg, live_creds)
     engine = StrategyEngine(cfg)
     executor = Executor(exchange, cfg)
     state = load_state(runtime_cfg.get("state_path", "state/engine_state.json"))
