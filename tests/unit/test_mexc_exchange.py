@@ -104,18 +104,22 @@ def test_place_stop_builds_trigger_close_short():
     assert '"triggerPrice": 1.175' in body
 
 
-def test_close_uses_position_id_and_holdvol():
+def test_close_uses_position_id_and_holdvol_and_reports_fill():
     t = FakeTransport()
     t.routes["/position/open_positions"] = {"success": True, "code": 0, "data": [
         {"symbol": "PUMP_USDT", "holdVol": 500.0, "positionId": 99},
     ]}
     t.routes["/order/submit"] = {"success": True, "code": 0, "data": {"orderId": 5}}
-    make(t).close("PUMP_USDT")
+    t.routes["/order/get/"] = {"success": True, "code": 0,
+                              "data": {"dealAvgPrice": 1.10, "dealVol": 500.0, "state": 3}}
+    fill = make(t).close("PUMP_USDT")
     body = t.call_to("/order/submit").body
     assert '"side": 2' in body          # close short
     assert '"type": 5' in body          # market
     assert '"positionId": 99' in body
     assert '"vol": 500.0' in body
+    # the close fill price is fetched back so exit slippage can be measured
+    assert fill == OrderFill(order_id="5", avg_price=1.10, volume=500.0)
 
 
 def test_cancel_all_cancels_orders_and_plan_orders():

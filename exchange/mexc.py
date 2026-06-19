@@ -150,7 +150,12 @@ class MexcExchange:
         resp = self._post("/api/v1/private/order/submit", body)
         data = resp["data"]
         order_id = data["orderId"] if isinstance(data, dict) else data
-        return OrderFill(order_id=str(order_id), avg_price=0.0, volume=float(pos["holdVol"]))
+        detail = self._get_order(order_id)
+        return OrderFill(
+            order_id=str(order_id),
+            avg_price=float(detail.get("dealAvgPrice", 0.0) or 0.0),
+            volume=float(detail.get("dealVol", pos["holdVol"]) or pos["holdVol"]),
+        )
 
     def cancel_all(self, symbol: str) -> None:
         for path in ("/api/v1/private/order/cancel_all", "/api/v1/private/planorder/cancel_all"):
